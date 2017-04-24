@@ -9,6 +9,7 @@
 
 ;; Prerequisites
 (require 'auto-highlight-symbol)
+(require 'etags) ;; Workaround for older versions of erlang-mode
 (require 'erlang)
 (require 'f)
 

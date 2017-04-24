@@ -52,8 +52,6 @@ start() ->
   %% Lager requirements
   ok = ensure_application_started(compiler),
   ok = ensure_application_started(syntax_tools),
-  ok = ensure_application_started(goldrush),
-  ok = ensure_application_started(lager),
 
   ok = ensure_application_started(edts).
 

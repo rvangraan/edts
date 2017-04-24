@@ -293,7 +293,6 @@ get_module_info(M, Level) ->
 
 do_get_module_info(M, basic) ->
   Info                         = erlang:get_module_info(M),
-  {compile, Compile}           = lists:keyfind(compile, 1, Info),
   {exports, Exports}           = lists:keyfind(exports, 1, Info),
   {ok, ModSrc}                 = get_module_source(M, Info),
   [ {module, M}
