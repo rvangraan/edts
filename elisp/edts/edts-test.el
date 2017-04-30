@@ -149,10 +149,13 @@
   (edts-test-run-suite 'ert-run-tests-batch suite-name))
 
 (defun edts-test-run-suites-batch-and-exit ()
+  (edts-log-set-level 'debug)
   (condition-case err
       (unless (edts-test-run-suites-batch)
         (kill-emacs 1))
     (error
+     (with-current-buffer "*edts*"
+       (message (buffer-string)))
      (edts-log-error "Error running tests: %s" err)
      (kill-emacs 2)))
   (kill-emacs 0))

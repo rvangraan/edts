@@ -19,10 +19,11 @@
 ### You should have received a copy of the GNU General Public License
 ### along with EDTS. If not, see <http://www.gnu.org/licenses/>.
 ###############################################################################
-
+echo $ARGV
 PROJDIR=${1:-"$HOME"}
 ERL=${2:-$(which erl)}
 EDTS_HOME="$(cd "$(dirname "$0")" >/dev/null && pwd -P)"
+echo ${EDTS_HOME}
 PLUGIN_DIR=$EDTS_HOME/plugins
 
 cd "$EDTS_HOME"

@@ -219,7 +219,7 @@ free_vars(Snippet) -> free_vars(Snippet, 1).
 free_vars(Text, StartLine) ->
   case edts_syntax:free_vars(Text, StartLine) of
     {ok, _} = Res    -> Res;
-    {error, _} = Err -> format_errors(error, [{"Snippet", [Err]}])
+    {error, Errs} -> {error, format_errors(error, [{"Snippet", [Errs]}])}
   end.
 
 string_to_mfa(String0) ->

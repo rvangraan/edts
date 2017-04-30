@@ -25,7 +25,6 @@ env:
 script:
   - |
     docker run --rm \
-               --net=host \
                -v ${HOME}:${HOME} \
                -v /etc/passwd:/etc/passwd \
                -u $(id -u) \

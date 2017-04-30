@@ -47,7 +47,7 @@
 
 assoc(K, AList) ->
   case lists:keyfind(K, 1, AList) of
-    false  -> {error, notfound};
+    false  -> {error, {notfound, K}};
     {K, V} -> {ok, V}
   end.
 

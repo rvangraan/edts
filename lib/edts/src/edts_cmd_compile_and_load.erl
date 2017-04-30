@@ -1,5 +1,5 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% @doc Logging intrastructure
+%%% @doc compile_and_load_command command
 %%% @end
 %%% @author Thomas Järvstrand <tjarvstrand@gmail.com>
 %%% @copyright
@@ -23,67 +23,41 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%_* Module declaration =======================================================
--module(edts_log).
+-module(edts_cmd_compile_and_load).
 
 %%%_* Exports ==================================================================
 
 %% API
--export([debug/1,
-         debug/2,
-         info/1,
-         info/2,
-         warning/1,
-         warning/2,
-         error/1,
-         error/2,
-
-         log/3,
-
-         get_log_level/0,
-         set_log_level/1]).
-
--compile({no_auto_import,[error/2]}).
+-export([spec/0,
+         execute/1]).
 
 %%%_* Includes =================================================================
-
 %%%_* Defines ==================================================================
-
--define(log_levels, [{debug, 4},
-                     {info, 3},
-                     {warning, 2},
-                     {error, 1}]).
-
 %%%_* Types ====================================================================
-
 %%%_* API ======================================================================
-debug(    Fmt)       -> debug(Fmt, []).
-debug(    Fmt, Args) -> log(debug, Fmt, Args).
-info(     Fmt)       -> info(Fmt, []).
-info(     Fmt, Args) -> log(info, Fmt, Args).
-warning(  Fmt)       -> warning(Fmt, []).
-warning(  Fmt, Args) -> log(warning, Fmt, Args).
-error(    Fmt)       -> error(Fmt, []).
-error(    Fmt, Args) -> log(error, Fmt, Args).
 
-log(Level, Fmt, Args) ->
-  case should_log_p(Level) of
-    true  -> io:format("[~p] ~s~n", [Level, io_lib:format(Fmt, Args)]);
-    false -> ok
-  end.
+spec() ->
+  [nodename, file].
 
-get_log_level() ->
-  {ok, Lvl} = application:get_env(edts, log_level),
-  Lvl.
-
-set_log_level(Level) -> application:set_env(edts, log_level, Level).
+execute(Ctx) ->
+    Node     = orddict:fetch(nodename, Ctx),
+    Filename = orddict:fetch(file, Ctx),
+    {ok, {Result, {Errors0, Warnings0}}} =
+        edts:call(Node, edts_code, compile_and_load, [Filename]),
+    Errors   = {array, [format_error(Error) || Error <- Errors0]},
+    Warnings = {array, [format_error(Warning) || Warning <- Warnings0]},
+    {ok, {struct, [{result, Result}, {warnings, Warnings}, {errors, Errors}]}}.
 
 %%%_* Internal functions =======================================================
 
-should_log_p(Level) ->
-  proplists:get_value(get_log_level(), ?log_levels) >=
-    proplists:get_value(Level, ?log_levels).
+format_error({Type, File, Line, Desc}) ->
+    [ {type, Type}
+    , {file, list_to_binary(File)}
+    , {line, Line}
+    , {description, list_to_binary(Desc)}].
 
-%%%_* Emacs ====================================================================
+
+%%%_* Emacs ============================================================
 %%% Local Variables:
 %%% allout-layout: t
 %%% erlang-indent-level: 2

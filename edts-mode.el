@@ -174,7 +174,9 @@
 
   ;; Auto-completion
   (edts-complete-setup)
-  (run-hooks 'edts-mode-hook))
+  (edts-log-debug "Running EDTS mode-hooks in %s" (current-buffer))
+  (run-hooks 'edts-mode-hook)
+  (edts-log-debug "Done setting up EDTS mode in %s" (current-buffer)))
 
 (defun edts-teardown ()
   ;; Start with our own stuff

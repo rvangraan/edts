@@ -1,5 +1,5 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% @doc Logging intrastructure
+%%% @doc init_nodes_command
 %%% @end
 %%% @author Thomas Järvstrand <tjarvstrand@gmail.com>
 %%% @copyright
@@ -23,65 +23,44 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%_* Module declaration =======================================================
--module(edts_log).
+-module(edts_cmd_init_node).
 
 %%%_* Exports ==================================================================
 
 %% API
--export([debug/1,
-         debug/2,
-         info/1,
-         info/2,
-         warning/1,
-         warning/2,
-         error/1,
-         error/2,
-
-         log/3,
-
-         get_log_level/0,
-         set_log_level/1]).
-
--compile({no_auto_import,[error/2]}).
+-export([execute/1,
+         spec/0]).
 
 %%%_* Includes =================================================================
+-include_lib("eunit/include/eunit.hrl").
 
 %%%_* Defines ==================================================================
-
--define(log_levels, [{debug, 4},
-                     {info, 3},
-                     {warning, 2},
-                     {error, 1}]).
-
 %%%_* Types ====================================================================
-
 %%%_* API ======================================================================
-debug(    Fmt)       -> debug(Fmt, []).
-debug(    Fmt, Args) -> log(debug, Fmt, Args).
-info(     Fmt)       -> info(Fmt, []).
-info(     Fmt, Args) -> log(info, Fmt, Args).
-warning(  Fmt)       -> warning(Fmt, []).
-warning(  Fmt, Args) -> log(warning, Fmt, Args).
-error(    Fmt)       -> error(Fmt, []).
-error(    Fmt, Args) -> log(error, Fmt, Args).
 
-log(Level, Fmt, Args) ->
-  case should_log_p(Level) of
-    true  -> io:format("[~p] ~s~n", [Level, io_lib:format(Fmt, Args)]);
-    false -> ok
-  end.
+spec() ->
+  [project_name,
+   nodename,
+   project_root,
+   project_lib_dirs,
+   app_include_dirs,
+   project_include_dirs,
+   erlang_cookie].
 
-get_log_level() ->
-  {ok, Lvl} = application:get_env(edts, log_level),
-  Lvl.
+execute(Ctx) ->
+  edts:init_node(orddict:fetch(project_name,         Ctx),
+                 orddict:fetch(nodename,             Ctx),
+                 orddict:fetch(project_root,         Ctx),
+                 orddict:fetch(project_lib_dirs,     Ctx),
+                 orddict:fetch(app_include_dirs,     Ctx),
+                 orddict:fetch(project_include_dirs, Ctx),
+                 orddict:fetch(erlang_cookie,        Ctx)).
 
-set_log_level(Level) -> application:set_env(edts, log_level, Level).
+
 
 %%%_* Internal functions =======================================================
+%%%_* Unit tests ===============================================================
 
-should_log_p(Level) ->
-  proplists:get_value(get_log_level(), ?log_levels) >=
-    proplists:get_value(Level, ?log_levels).
 
 %%%_* Emacs ====================================================================
 %%% Local Variables:

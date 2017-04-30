@@ -56,6 +56,7 @@ allowed_methods(ReqData, Ctx) ->
   {['POST'], ReqData, Ctx}.
 
 malformed_request(ReqData, Ctx0) ->
+  io:fwrite(user, <<"~p ~p ~p~n">>, [self(), ?MODULE, ?LINE]),
   try
     Node    = edts_util:make_nodename(wrq:path_info(nodename, ReqData)),
     Plugin  = ?l2a(wrq:path_info(plugin, ReqData)),

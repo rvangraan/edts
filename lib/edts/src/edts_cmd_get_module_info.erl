@@ -1,5 +1,5 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% @doc Logging intrastructure
+%%% @doc get_module_info command
 %%% @end
 %%% @author Thomas Järvstrand <tjarvstrand@gmail.com>
 %%% @copyright
@@ -23,67 +23,61 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%_* Module declaration =======================================================
--module(edts_log).
+-module(edts_cmd_get_module_info).
 
 %%%_* Exports ==================================================================
 
 %% API
--export([debug/1,
-         debug/2,
-         info/1,
-         info/2,
-         warning/1,
-         warning/2,
-         error/1,
-         error/2,
-
-         log/3,
-
-         get_log_level/0,
-         set_log_level/1]).
-
--compile({no_auto_import,[error/2]}).
+-export([spec/0,
+         execute/1]).
 
 %%%_* Includes =================================================================
-
 %%%_* Defines ==================================================================
-
--define(log_levels, [{debug, 4},
-                     {info, 3},
-                     {warning, 2},
-                     {error, 1}]).
-
 %%%_* Types ====================================================================
-
 %%%_* API ======================================================================
-debug(    Fmt)       -> debug(Fmt, []).
-debug(    Fmt, Args) -> log(debug, Fmt, Args).
-info(     Fmt)       -> info(Fmt, []).
-info(     Fmt, Args) -> log(info, Fmt, Args).
-warning(  Fmt)       -> warning(Fmt, []).
-warning(  Fmt, Args) -> log(warning, Fmt, Args).
-error(    Fmt)       -> error(Fmt, []).
-error(    Fmt, Args) -> log(error, Fmt, Args).
 
-log(Level, Fmt, Args) ->
-  case should_log_p(Level) of
-    true  -> io:format("[~p] ~s~n", [Level, io_lib:format(Fmt, Args)]);
-    false -> ok
-  end.
+spec() ->
+  [nodename, module, info_level].
 
-get_log_level() ->
-  {ok, Lvl} = application:get_env(edts, log_level),
-  Lvl.
-
-set_log_level(Level) -> application:set_env(edts, log_level, Level).
+execute(Ctx) ->
+    Node   = orddict:fetch(nodename, Ctx),
+    Module = orddict:fetch(module, Ctx),
+    Level  = orddict:fetch(info_level, Ctx),
+    {ok, Info} = edts:call(Node, edts_code, get_module_info, [Module, Level]),
+    {ok, format(Info)}.
 
 %%%_* Internal functions =======================================================
 
-should_log_p(Level) ->
-  proplists:get_value(get_log_level(), ?log_levels) >=
-    proplists:get_value(Level, ?log_levels).
+format(Info) ->
+  lists:foldl(fun format/2, [], Info).
 
-%%%_* Emacs ====================================================================
+format({exports, Exports}, Acc) ->
+  [{exports, Exports}|Acc];
+format({source, Source}, Acc) ->
+  [{source, list_to_binary(Source)}|Acc];
+format({time, {{Y, Mo, D}, {H, Mi, S}}}, Acc) ->
+  Fmt = "~b-~2.10.0b-~2.10.0b ~2.10.0b:~2.10.0b:~2.10.0b",
+  Str = lists:flatten(io_lib:format(Fmt, [Y, Mo, D, H, Mi, S])),
+  [{time, list_to_binary(Str)}|Acc];
+format({records, Recs0}, Acc) ->
+  Recs = [lists:map(fun format_element/1, Rec) || Rec <- Recs0],
+  [{records, Recs}|Acc];
+format({functions, Funs0}, Acc) ->
+  Funs = [lists:map(fun format_element/1, Fun) || Fun <- Funs0],
+  [{functions, Funs}|Acc];
+format({imports, Imports}, Acc) ->
+  [{imports, Imports}|Acc];
+format({includes, Includes}, Acc) ->
+  [{includes, [list_to_binary(I) || I <- Includes]}|Acc];
+format({module, _} = Module, Acc) ->
+  [Module|Acc];
+format(_, Acc) ->
+  Acc.
+
+format_element({source, Source}) -> {source, list_to_binary(Source)};
+format_element(Attr)             -> Attr.
+
+%%%_* Emacs ============================================================
 %%% Local Variables:
 %%% allout-layout: t
 %%% erlang-indent-level: 2

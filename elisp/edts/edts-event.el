@@ -21,7 +21,9 @@
 ;;
 ;; You should have received a copy of the GNU Lesser General Public License
 ;; along with EDTS. If not, see <http://www.gnu.org/licenses/>.
-(require 'edts-rest)
+
+(require 'edts-api)
+(require 'edts-log)
 
 (defvar edts-event-handlers nil
   "List of handlers for different types of events. This is an alist
@@ -29,6 +31,7 @@ where the keys are the event types (symbols) and each value is a list of
 functions to call for that event type. Each function should take four
 arguments: node (string) event-class (symbol) event-type (symbol) and
  event-info (alist) ")
+
 
 (defvar edts-event-inhibit nil
   "If non-nil, inhibit the event-loop")
@@ -59,7 +62,8 @@ that class."
 (defun edts-event-listen ()
   "Start the event-listening loop."
   (unless edts-event-inhibit
-    (let ((buf (edts-rest-get-async '("event")
+    (edts-log-debug "Listening on EDTS events")
+    (let ((buf (edts-rpc-call-async "get_event"
                                     nil
                                     #'edts-event-listen-callback
                                     nil
@@ -204,5 +208,7 @@ that class."
       (edts-event-handle "node" 'dummy-class 'foo nil)
       (should (equal edts-evts '(foo foo)))
       (setq edts-event-handlers handlers))))
+
+(add-hook 'edts-api-server-up-hook 'edts-event-listen)
 
 (provide 'edts-event)
